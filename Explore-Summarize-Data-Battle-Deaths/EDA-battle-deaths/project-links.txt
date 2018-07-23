@@ -1,0 +1,14 @@
+Dataset source: 
+https://www.prio.org/Data/Armed-Conflict/ 
+
+Codebook and dataset downloads:
+http://ucdp.uu.se/downloads/
+
+Steven Pinker: 
+https://stevenpinker.com/pages/research
+
+Pinker, explanation of data analysis method: 
+https://stevenpinker.com/pages/frequently-asked-questions-about-better-angels-our-nature-why-violence-has-declined
+
+Article with similar findings about absolute war/battle deaths:
+https://www.scientificamerican.com/article/steven-pinker-this-is-historys-most-peaceful-time-new-study-not-so-fast/

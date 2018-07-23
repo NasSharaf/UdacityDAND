@@ -1,0 +1,464 @@
+---
+editor_options:
+  chunk_output_type: console
+output:
+  html_document: default
+  pdf_document: default
+---
+War Deaths by Nasir Sharaf
+========================================================
+
+Steven Pinker has argued in his best selling book "the Better Angels of Our Nature" that human violence has been trending downward. I wanted to validate his claims, so I used one of his datasets - the Uppsala Conflict Data Program Battle related Deaths Dataset. The exploration is as follows:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk. This
+# prevents the code from displaying in the knitted HTML output. You should set
+# echo=FALSE for all code chunks in your file, unless it makes sense for your
+# report to show the code that generated a particular plot.
+
+# The other parameters for "message" and "warning" should also be set to FALSE
+# for other code chunks once you have verified that each plot comes out as you
+# want it to. This will clean up the flow of your report.
+
+#install.packages('ggplot2')
+library(ggplot2)
+
+#install.packages('dplyr')
+library(dplyr)
+
+#install.packages("knitr")
+library(knitr)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, dataset}
+# Load the Data
+bd <- read.csv('ucdp-brd-conf-172.csv')
+head(bd)
+
+#I ended up not using this set even though I would like to to collate the data per capital and per capita deaths
+#gm <- readxl::read_excel('indicator gapminder population.xlsx')
+#head(gm)
+```
+
+
+# Univariate Plots Section
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, names}
+#First, let's look at what is in our dataset
+names(bd)
+```
+
+I first just wanted to look at the dataset and see what variables we have to work with. Some of the variables are confusing, so I consulted the codebook to better understand that dataset. 
+
+There were two datasets, one that was a "Dyadic" set, a collection of two-party battles, and the set I used which was a conflict set. The Dyadic ID was carried over from the dyadic set. 
+
+Incompatibility returns 1 or 2. 1 stands for 'incompatibility about government' indicating that the source of the conflict is a discrepency over governmental affairs. 2 stands for 'incompatibility about territory' indicating a resource based conflict. 
+
+Another prominent variable will be the type_of_conflict variable. It is also given a numeric evaluation from 1 to 4. 1 stands for extrasystemic - I will be honest, the codebook is lacking for explanatinon as to what this could mean. 2 stands for interstate, meaning two or more countries at war with each other. 3 stands for internal, so mostly civil war or revolutions that do not involve other state entities. 4 stands for international internal, which would refer to a conflict in which a state is deal with internal unrest but has also accepted support from foreign troops. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, bdvsyrhistograms}
+#Plot data of battle deaths per year
+ggplot(aes(x = year), data = bd) + geom_histogram()
+# Filter by type of conflct.
+ggplot(aes(x = year), data = bd) + geom_histogram() + 
+  facet_wrap(~type_of_conflict)
+```
+
+The first real plot was to set battle deaths against the years they occured. I then filtered by type of conflict, to see if battle deaths were overrepresented by one type of conflict. I could see that battle deaths by raw count were far, far more prevalent in internal conflicts (type 3) but internationalized internal conflicts (type 4), that is internal conflicts in which foreign troops were present, were rising in recent years.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, bdincompatibility}
+# plot data
+ggplot(aes(x = year), data = bd) + geom_histogram() + 
+  facet_wrap(~incompatibility)
+# Data cleaning 
+bd = bd[!(bd$incompatibility==3),]
+# replot data
+ggplot(aes(x = year), data = bd) + geom_histogram() + 
+  facet_wrap(~incompatibility)
+
+```
+
+Type of conflict tells us who the main conflict is with, but not what the conflict is about. I thought it would be best to see battle deaths by incompatibility. The codebook tells us that there is only two categories: 1 stands for 'incompatibility about government' indicating that the source of the conflict is a discrepency over governmental affairs. 2 stands for 'incompatibility about territory' indicating a resource based conflict. However, there was a "3" that was plotted, so this had to be removed. We can see that there seems to be an even split between type 1 incompatibility and type 2 incompatibility. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, bdregions}
+#plot data
+ggplot(aes(x = year), data = bd) + geom_histogram() + facet_wrap(~region)
+
+#data clenaing
+bd2 = bd[!(bd$region=="1, 3, 5") ,]
+
+bd = bd2[!(bd2$region=="1, 2, 3, 5") ,]
+
+#Replot data
+ggplot(aes(x = year), data = bd) + geom_histogram() + facet_wrap(~region)
+
+```
+
+Type of conflict also doesn't tell us where the conflict is, so the next area to explore was the region of battle deaths. There was a similar moment of data cleaning to clean out some battles that spanned a few regions. We can see that region three (asia) and region four (africa) had the highest battle deaths. Region two (the middle east) seems to be trending up while region five (the Americas) is trending down. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, bdsummary}
+# Summary by territory
+by(bd$bd_best, bd$battle_location, summary)
+
+# Battle deaths by location
+counts <- table(bd$bd_best)
+locations <- table(bd$battle_location)
+barplot(locations, main="Battle deaths by territory",
+  xlab="Number of Battle Deaths", col=counts) 
+
+```
+
+I also wanted to see a finer breakdown of the data by territory, so I printed the summary. I also attempted a bar plot of the battle deaths per battle location. The codebook explicitly calls out against using battle locations for geospatial analysis, but I only wanted to see which locations have the most battles. 
+
+### Reflections: Univariate
+
+Although this section has only been devoted to analyzing single variables at a time, we have already learned quite a bit. We have seen regional differences in conflict and how bloody some types of conflict are compared to others. We will continue by comparing two variables agaisnt each other for a deeper understanding of global violence. 
+
+> 
+
+# Univariate Analysis
+
+
+### What is the structure of your dataset?
+
+I will repeat here what I wrote above when explaining the structure of the data set:
+
+The dataset has an accompanying codebook that illuminates the more confusing variables. 
+
+There were two datasets, one that was a "Dyadic" set, a collection of two-party battles, and the set I used which was a conflict set. The Dyadic ID was carried over from the dyadic set. 
+
+Incompatibility returns 1 or 2. 1 stands for 'incompatibility about government' indicating that the source of the conflict is a discrepency over governmental affairs. 2 stands for 'incompatibility about territory' indicating a resource based conflict. 
+
+Another prominent variable will be the type_of_conflict variable. It is also given a numeric evaluation from 1 to 4. 1 stands for extrasystemic - I will be honest, the codebook is lacking for explanatinon as to what this could mean. 2 stands for interstate, meaning two or more countries at war with each other. 3 stands for internal, so mostly civil war or revolutions that do not involve other state entities. 4 stands for international internal, which would refer to a conflict in which a state is deal with internal unrest but has also accepted support from foreign troops. 
+
+### What is/are the main feature(s) of interest in your dataset?
+
+I want to see if the conflicts and battle related deaths have decreaseed or increased over time, as was studied by Steven Pinker. Additionally, if these death increased/decreased across all categories uniformly or whether they decreased or increased in certain types of conflict only. 
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+
+The regions may be of interest. Particularly with the incompatibility about territory types of conflict, it would unveil which regions are most prone to resource based conflicts. It would've been interesting to compare with population data also, but that may be foregone. 
+
+### Did you create any new variables from existing variables in the dataset?
+
+No. Pinker has claimed that he used as raw and unfiltered data as possible and I strive to do the same.
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+Yes. There was a 3 given for incompatibility, which should not be there according to the codebook, so that too was dropped.  One unusual distribution was the rise in battle deaths count for international internal, which I believe has to do with the Syrian conflict. 
+
+# Bivariate Plots Section
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, bivariates}
+ggplot(aes(x = year, y = bd_best), data = bd) + 
+  geom_point(position = position_jitter(h = 0)) +  
+  geom_line(stat = 'summary', fun.y = max, color = 'red') 
+
+ggplot(aes(x = year, y = bd_best), data = bd) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  geom_line(stat = 'summary', fun.y = max, color = 'red') 
+
+ggplot(aes(x = year, y = bd_best), data = bd) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'log10') + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+
+```
+
+At first, I just wanted to see battle deaths by year for each battle. This might've been better placed in the univariate section, but I also overlayed a max trendline. I plotted one with raw data, one with a square root axis, and one with a log axis. For all except the log axis plot I plotted the line for the maximum battle deaths. For the log plot I plotted the mean line for battle deaths. This sets up what to expect ot of the next series of plots. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, genbivariates}
+# by type of conflict
+ggplot(aes(x = year, y = bd_best), data = bd) + geom_point() + 
+  facet_wrap(~type_of_conflict)
+# by incompatibility
+ggplot(aes(x = year, y = bd_best), data = bd) + geom_point() + 
+  facet_wrap(~incompatibility)
+# by region
+ggplot(aes(x = year, y = bd_best), data = bd) + geom_point() + 
+  facet_wrap(~region) 
+```
+
+Following from the previosu plots, I also wanted to parse out battle deaths by type of conflict (the first plot), incompatibility (the second) and region (the third plot). We saw a rise in type three and type 4 conflicts, civil wars and internationalized civil wars, which I attribute by timeline ot be the syrian conflict. By incompatibility we also see a start rise in incompatibility over resources (2). And of course, when we look at battle deaths by region we can see a sharp spike in region 2, the middle east. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, regionbox}
+# by region boxplot
+ggplot(aes(x = region, y = bd_best), data = bd) + geom_boxplot() 
+# by sqrt
+ggplot(aes(x = region, y = bd_best), data = bd) + geom_boxplot() + 
+  coord_trans(y = 'sqrt')
+# by log
+ggplot(aes(x = region, y = bd_best), data = bd) + geom_boxplot() + 
+  coord_trans(y = 'log10')
+```
+
+I thought it might be best to use box plots to get a better understanding of the data. We could see with most of the above plots that there were few high casualty battle deaths but many low casualty deaths, which would make a box plot a better choice. I fumbled for a scale, but the log scale seems like the best one. I started, at random, by looking at a box plot for battle deaths by region. Region 2, the middle east, had much higher outliers but the medians seemed to be on par with other regions. In fact, the only region with a lower median was region 3, Asia, althought they had a higher frequency of outliers. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, incompbox}
+# by incompatibility boxplot
+ggplot(aes(x = incompatibility, y = bd_best, group = incompatibility), data = bd) + 
+  geom_boxplot()  
+# by sqrt
+ggplot(aes(x = incompatibility, y = bd_best, group = incompatibility), data = bd) + 
+  geom_boxplot() + coord_trans(y = 'sqrt') 
+# by log
+ggplot(aes(x = incompatibility, y = bd_best, group = incompatibility), data = bd) + 
+  geom_boxplot() + coord_trans(y = 'log10') 
+
+```
+
+I did a similar thing for incompatibility and battle deaths. As we've seen a few times now, incompatibility over territory tends to draw more battle deaths than incompatibility over government. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, groupbyyear}
+# Collate data by year
+year_group = group_by(bd, year)
+bd_by_year <- summarise(year_group,
+                          bd_best_mean = mean(bd_best),
+                          bd_best_med = median(bd_best),
+                          n = n())
+head(bd_by_year)
+# plot data, by mean
+ggplot(aes(x = year, y = bd_best_mean), data = bd_by_year) + 
+  geom_point(position = position_jitter(h = 0))
+# plot data sqrt
+ggplot(aes(x = year, y = bd_best_mean), data = bd_by_year) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') 
+# plot data log
+ggplot(aes(x = year, y = bd_best_mean), data = bd_by_year) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'log10') 
+# add trendline, mean
+ggplot(aes(x = year, y = bd_best_mean), data = bd_by_year) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red') 
+
+# plot data, by median
+ggplot(aes(x = year, y = bd_best_med), data = bd_by_year) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'log10') 
+```
+
+For this section I grouped the battle deaths by year and cycled through different axises. The mean battle deaths by year with a mean trendline is important, it shows a surprising slight cyclical trend in battle deaths. Its clear that by raw numbers there have been higher battle deaths in the past few years than previously. It also looks like high-casualty battles happen every ten to twelve years (but this maybe the relatively small timeframe over which the data is collected.)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, groupbytoc}
+# group by year, type of conflict
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0))  + 
+  facet_wrap(~type_of_conflict) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+# by sqrt axis
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  facet_wrap(~type_of_conflict) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+# by log axis
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'log10') + 
+  facet_wrap(~type_of_conflict) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+```
+
+I took the same data set grouped by year and filtered for type of conflict. We've already seen to some extent how much more prevalent type 3, civil conflict, and type 4, internationalized civil conflict, is but this plot brought home exactly how much more prevalent civil conflicts are as opposed to interstate conflicts. This is surprising to me because I tend to think of battle deaths as between two or more nations, but it appears that it is more common for battle deaths to occur within states. While interstate conflict and battle deaths are very devastating when they happen, intrastate conflict is much more prevalent. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, groupbyincomp}
+# group by year, incompatibility
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + 
+  facet_wrap(~incompatibility) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+# sqrt graph
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  facet_wrap(~incompatibility) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+# log graph
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'log10') + 
+  facet_wrap(~incompatibility) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
+```
+
+Looking at battle deaths by year by incompatibility, we can see that type 1 incompatibilty, incompatibility over government, seemed to peak in the late 1990s and by 2000. Conversely, battle deaths by type 2 incompatibilty (over territory) saw a swell at around 2013-2014. Overall though, incompatibilites about government seem to on the whole be declining even though the most prevalent type of conflict, as we saw earlier, was intrastate. This is strange, I would expect most intrastate conflict to be about government/how things are run but it may be pointing to how states are not providing enough territory or resources for their people. 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, groupbyregion}
+# plot by region
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0))  + 
+  facet_wrap(~region) + geom_line(stat = 'summary', fun.y = mean, color = 'red')
+# sqrt graph
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  facet_wrap(~region) + geom_line(stat = 'summary', fun.y = mean, color = 'red')
+# log graph
+ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'log10') + 
+  facet_wrap(~region) + geom_line(stat = 'summary', fun.y = mean, color = 'red')
+```
+
+Looking at the log graph again, we seem some familiar ideas playing out. Region 2, the middle east, has a tumultuous ascendency that's peaked in recent years. That was expected. Region three, Asia, has high frequencies of battle deaths that is probably due to the hgih population and size of the continent. The average of battle deaths in Asia is on par with mos tof the other regions. The surprising region was region 5, the Americas, which has a noticable downward trend. 
+
+### Reflection: Bivariates
+
+Many of the observations made in the univariate section were expanded upon in this section. For example, we knew from the unvariate analysis that type two incompatibility was responsible for a higher battle death count than type one, but we could see specific peaks and valleys. It seemed like government incompatibilities, while devastting when they occured, were declining compared to territory incompatibilities. Insights like this were made through out this section. 
+
+The analysis itself was more nuanced in this section. Many times, the same data had to be plotted against different axises in order to see clear trends or better evaluate the data. 
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+
+The absolute number of battle deaths seems to have gone up, but does so periodically. I was very surprised at the seeming sinusoidal behavior of it. 
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+By incompatibility type we see that conflict with/because of government had a spike in 2000 but conflict due to territory increased around 2015. Looking at conflict type, we see a similar spike for 2 - interstate at around 2000 and a slight bump for conflict type 3 - internal. Not that internal has a low average but is of much higher frequency. 
+
+### What was the strongest relationship you found?
+
+By type of cnflict, 3 - internal conflict is incredibly frequent. It doesn't show as much in terms of averages because the casualties are low but they occur far, far more than other data. 
+
+# Multivariate Plots Section
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, regionmultivariates}
+# Year and region
+bd.year_region <- group_by(bd, year, region) %>%
+  summarise(mean_bd_best2 = mean(bd_best),
+            median_bd_best2t = median(bd_best),
+            n = n())
+  
+head(bd.year_region)
+# by mreans
+ggplot(aes(x = year, y = mean_bd_best2), data = bd.year_region) + 
+  geom_line(aes(color = region), stat = 'summary', fun.y = mean)
+# by medians
+ggplot(aes(x = year, y = median_bd_best2t), data = bd.year_region) + 
+  geom_line(aes(color = region), stat = 'summary', fun.y = median)
+
+```
+
+The first multivariate graph was plotting the multiple regions, by battle death by year, on one graph. The first graph was using the means of battle deaths and showed about what I expected given the bivariate analysis. There was, as expected, a sharp rise in recent years in region 2, the middle east. There were shapr bumps in region four, Africa, and region one, Europe. THe second grpah, by medians, was very surprising however. This showed that the late 90s and early 00s had the highest median battle deaths in region one, Europe. This might've been the Bosnian War or possibly the Irish Peace Process. Either way, this was incredibly surprising since it did not show up in any of the previous analyses. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, incompmultivariates}
+#Year and incompatibility
+bd.year_incomp <- group_by(bd, year, incompatibility) %>%
+  summarise(mean_bd_best2 = mean(bd_best),
+            median_bd_best2t = median(bd_best),
+            n = n())
+  
+head(bd.year_incomp)
+# by means
+ggplot(aes(x = year, y = mean_bd_best2), data = bd.year_incomp) + 
+  geom_line(aes(color = incompatibility, group = incompatibility), stat = 'summary', fun.y = mean)
+# by medians
+ggplot(aes(x = year, y = median_bd_best2t), data = bd.year_incomp) + 
+  geom_line(aes(color = incompatibility, group = incompatibility), stat = 'summary', fun.y = mean)
+```
+
+Showing both forms of incompatibility on the smae graph reiterates exactly the sentiments I believed earlier. Type 2 incompatibility, over territory, is far more prevalent and more responsible for a higher battle dath count than type one. The first graph shows how conflicts over territory have increased to a startling amount in recent years. THe second graph shows the median mbattle deaths by incompatibility and shows that the median deaths are always higher except for one year in 1993. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, tocmultivariates}
+# Year and conflict
+bd.year_conf <- group_by(bd, year, type_of_conflict) %>%
+  summarise(sum_bd_best2 = sum(bd_best),
+            mean_bd_best2 = mean(bd_best),
+            median_bd_best2t = median(bd_best),
+            n = n())
+  
+head(bd.year_conf)
+# by sum
+ggplot(aes(x = year, y = sum_bd_best2), data = bd.year_conf) + 
+  geom_line(aes(color = type_of_conflict), stat = 'summary', fun.y = sum)
+# by median
+ggplot(aes(x = year, y = median_bd_best2t), data = bd.year_conf) + 
+  geom_line(aes(color = type_of_conflict), stat = 'summary', fun.y = median)
+# by mean
+ggplot(aes(x = year, y = mean_bd_best2), data = bd.year_conf) + 
+  geom_line(aes(color = type_of_conflict), stat = 'summary', fun.y = mean)
+
+```
+
+Analyzing by type of conflict shows that, as has been a recurring observation, type 3 conflicts and type four conflicts have been steadily rising globally. This is most prevalent in thefirst graph, which orders by sums. When we look by medians, we can see spiked at around 1990 and 2000 and see that the median battle deaths are highest for type 2, interstate conflicts. Same is true for the plot by mean. Another interesting trend I noticed was the sharp rise at around 2013 in conflicts that were categorized as both civil and internationalized civil. 
+
+### Reflections: Multivariates
+
+Much of the analysis performed her was a continuation of the anlysis performed in the bivariate section, but was clenaer and produced more insightful graphs and visualizations. It is easier to compare trends against each other on the same plot and not across plots, so that intrinsically revealed some interesting insights. 
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+Type of conflict, when plotted directly against other types of conflict still showed that 2 - inter state conflict caused the most battle deaths at the year 2000. This supports an earlier observation. I also saw a rise in 4 - international internal conflicts and on the region graph a massive spike in region 2 - the middle east after 2010, somewhat supporting my hypothesis of Syria's effect on the data. 
+
+### Were there any interesting or surprising interactions between features?
+
+Because of the previous observation of the frequency of type 3 conflicts - internal, I summed by conflict type. Interestingly, it seems as though internal conflicts (3) cycle off with state conflicts (2). Also, as international internal deaths rose, there was a steep drop off in type 3 - internal deaths. Was this a change in how the data was categorized?
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+
+No, but the cyclical nature seems to indicate a model might exist.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, message=FALSE, warning=FALSE, plotone}
+gg1 <- ggplot(aes(x = year, y = bd_best), data = year_group) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  facet_wrap(~type_of_conflict) + 
+  geom_line(stat = 'summary', fun.y = mean, color = 'red') + 
+  ggtitle("Average Battle Deaths by Conflict Type") + xlab('Year') + 
+  ylab('Battle Deaths (number of deaths)') 
+
+plot(gg1)
+```
+
+### Description One
+
+THe plots show the number of battle deaths by conflict type, where each conflict type was described in the accompanyng codebook as: (1) - extrasystemic, (2) Interstate, (3) Internal (involving no foreign agents) and (4) internationalized internal (internal conflicts with interstate forces). These plots show a few thing well, namely the frequency of internal conflicts and the intermittency of interstate conflicts. While the average for internal conflicts is low its frequency overshadows other types of conflict. 
+
+### Plot Two
+```{r echo=FALSE, message=FALSE, warning=FALSE, plottwo}
+ggplot(aes(x = year, y = mean_bd_best2), data = bd.year_region) + 
+  geom_line(aes(color = region), stat = 'summary', fun.y = mean) + 
+  ggtitle("Average Battle Deaths by Region") + xlab('Year') + 
+  ylab('Battle Deaths (number of deaths)')
+```
+
+### Description Two
+
+These plots show battle deaths by region, where the codebook again reveals that (1) Europe, (2) is the Middle East, (3) is Asia, (4) is Africa and (5) is the Americas. This shows, interestingly, that the violence in the Middle East is of late unprecedented. Also this shows, though hard to see, a slow but steady growth of battle deaths in Asia. This also shows how different violence is distributed regionally. 
+
+### Plot Three
+```{r echo=FALSE, message=FALSE, warning=FALSE, plotthree}
+ggplot(aes(x = year, y = bd_best_mean), data = bd_by_year) + 
+  geom_point(position = position_jitter(h = 0)) + coord_trans(y = 'sqrt') + 
+  ggtitle("Average Battle Deaths Total") + xlab('Year') + 
+  ylab('Battle Deaths (number of deaths)')
+```
+
+### Description Three
+
+I wanted to show a simple graph, as Pinker would show, of just the average battle deaths per year against the year. It shows, most interestingly a weak sort of sine wave. While alot of these are explained by violence in the middle east or the tragedy of Darfur, its seeming periodicity is striking. 
+
+
+------
+
+# Reflection
+
+Pinker did do one thing to his datasets that I simply was unable to do and that was he made all data shown as per capita. I could not find a compatible enough dataset without truncating too much data, but this is one area for future study. My biggest criticism of Pinker's analysis has been how he does not compare battle deaths to death rates per population, so this is another area I would like to study.
+
+All in all, I was surprised by the periodicity of the data sometimes. It might've been naive analysis, but they do say history repeats itself, so it would make sense that it shows up in the data. 
